@@ -1,31 +1,61 @@
 /* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
 /*
- ***** BEGIN LICENSE BLOCK *****
-           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-                   Version 2, December 2004
-
-Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
-
-Everyone is permitted to copy and distribute verbatim or modified
-copies of this license document, and changing it is allowed as long
-as the name is changed.
-
-           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-  TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
- 0. You just DO WHAT THE FUCK YOU WANT TO.
-
-***** END LICENSE BLOCK *****
+ * ***** BEGIN LICENSE BLOCK *****
+ * Version: MIT
+ *
+ * Portions created by Alan Antonuk are Copyright (c) 2012-2013
+ * Alan Antonuk. All Rights Reserved.
+ *
+ * Portions created by Mike Steinert are Copyright (c) 2012-2013
+ * Mike Steinert. All Rights Reserved.
+ *
+ * Portions created by VMware are Copyright (c) 2007-2012 VMware, Inc.
+ * All Rights Reserved.
+ *
+ * Portions created by Tony Garnock-Jones are Copyright (c) 2009-2010
+ * VMware, Inc. and Tony Garnock-Jones. All Rights Reserved.
+ *
+ * Portions created by Adrien Pre are Copyright (c) 2017
+ * Adrien Pre. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * ***** END LICENSE BLOCK *****
  */
 
 /**
   \file
   \brief rabbitmq Tutorial 1 (receive)
   
-Tutorial 1 receive using <i>rabbitmq-c</i> library available at
+Tutorial 1 "receive" program using <i>rabbitmq-c</i> library available at
 https://github.com/alanxz/rabbitmq-c
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <stdint.h>
+#include <amqp_tcp_socket.h>
+#include <amqp.h>
+#include <amqp_framing.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,23 +66,9 @@ https://github.com/alanxz/rabbitmq-c
 #include <amqp.h>
 #include <amqp_framing.h>
 
-
-#if defined(NDEBUG)
-#undef NDEBUG
-#endif
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <stdint.h>
-#include <amqp_tcp_socket.h>
-#include <amqp.h>
-#include <amqp_framing.h>
+#include "utils.h" // for amqp_dump(). todo: remove this dependency
 
 #include "assert.h"
-
-
 
 int main(int argc, char const *const *argv)
 {
@@ -67,6 +83,7 @@ int main(int argc, char const *const *argv)
 
     amqp_rpc_reply_t r;
 
+    (void) argc; (void ) argv; // get rid of the unused variable warning
 
     conn = amqp_new_connection();       assert(conn!=NULL);
     socket = amqp_tcp_socket_new(conn); assert(socket!=NULL);
@@ -84,8 +101,10 @@ int main(int argc, char const *const *argv)
 
     r = amqp_get_rpc_reply(conn);
     assert(r.reply_type==AMQP_RESPONSE_NORMAL);
-
-
+    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
+        printf("Cannot login\n");
+        exit(1);
+    }
 
      amqp_basic_consume(conn, 1, amqp_cstring_bytes(queuename), amqp_empty_bytes, 0, 1,0, amqp_empty_table);
      r = amqp_get_rpc_reply(conn);
